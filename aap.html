@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أسعار الذهب الفورية - واجهة أمامية احترافية</title>
+    <style>
+        /* خط عربي احترافي */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f7f9fc; 
+            min-height: 100vh;
+        }
+        /* تصميم الكاردات بعمق وجمالية */
+        .gold-card {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .gold-card:hover {
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15);
+        }
+        /* تنسيق خاص لشريط التغير */
+        .price-change-pill {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-8 border-b-4 border-yellow-500 pb-3 text-center">📈 أسعار الذهب الفورية (Front End Demo) <br> <span style="color: green;"> المهندس خالد جمال (ابو الحبيب )</span></h1>
+
+        <div class="gold-card bg-white p-6 md:p-10 rounded-xl mb-12">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                
+                <div class="mb-6 md:mb-0">
+                    <p class="text-xl text-gray-500">سعر الأونصة العالمي (XAU/USD)</p>
+                    <div class="flex items-baseline mt-2">
+                        <span id="global-price" class="text-6xl font-extrabold text-gray-900">...</span>
+                        <span class="text-3xl font-light text-gray-600 mr-2">$</span>
+                    </div>
+                </div>
+
+                <div class="text-left">
+                    <p class="text-lg text-gray-500 mb-2">التغير اليومي</p>
+                    <div id="global-change-pill" class="price-change-pill bg-gray-100 text-gray-500">
+                        جاري التحميل...
+                    </div>
+                </div>
+            </div>
+            <p class="text-sm text-gray-400 mt-6 text-left">آخر تحديث: <span id="last-update">--</span></p>
+        </div>
+
+        <div class="gold-card bg-white p-6 rounded-xl mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">أسعار العيارات والسبائك (محليًا)</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-yellow-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">العيار / الوحدة</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">سعر الجرام/الوحدة</th>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="local-prices-body" class="bg-white divide-y divide-gray-200">
+                        <tr><td colspan="3" class="text-center py-4 text-gray-500">جاري جلب الأسعار...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="gold-card bg-white p-6 rounded-xl mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">الرسم البياني الفني (البيانات الحية)</h2>
+            <div class="h-96 w-full bg-gray-50 flex flex-col items-center justify-center rounded-lg text-gray-500 text-xl border border-gray-200">
+                <span class="mb-2">🔗 مكان دمج أداة الرسم البياني الاحترافية (مثل TradingView)</span>
+                <span class="text-sm">(Front End جاهز لاستقبال الكود المدمج)</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================================
+        // 🚀 الدوال الأساسية (API Integration & Front End Logic)
+        // ==========================================================
+
+        // 🔑 مفتاحك من GoldAPI.io - تأكد من صلاحية المفتاح
+        const GOLD_API_KEY = "goldapi-a2wgr19mgvqo6kl-io"; 
+
+        // 🏷 عناصر الواجهة الأمامية (DOM Elements)
+        const globalPriceEl = document.getElementById('global-price');
+        const changePillEl = document.getElementById('global-change-pill');
+        const lastUpdateEl = document.getElementById('last-update');
+        const localPricesBodyEl = document.getElementById('local-prices-body');
+
+        // 💾 متغير لتخزين السعر الأخير للأونصة للمقارنة وحساب التغير
+        let lastOuncePrice = null;
+
+
+        // ----------------------------------------------------------
+        // ⿡ دالة جلب السعر وتحويله (تم تحديث API سعر الصرف هنا)
+        // ----------------------------------------------------------
+        async function getGoldPrice() {
+            try {
+                // ⿡ جلب سعر أوقية الذهب مقابل الدولار
+                const goldRes = await fetch("https://www.goldapi.io/api/XAU/USD", {
+                    headers: { "x-access-token": GOLD_API_KEY },
+                });
+                const goldData = await goldRes.json();
+
+                if (!goldData.price) throw new Error("لم يتم العثور على سعر الذهب من الـ API");
+
+                const ouncePriceUSD = goldData.price; // سعر الأوقية الحالي بالدولار
+                const priceChangeUSD = goldData.ch; // التغير اليومي (من API)
+                const priceChangePercent = goldData.chp; // نسبة التغير اليومي (من API)
+
+                // ✅ ⿢ جلب سعر صرف الدولار مقابل الجنيه المصري (باستخدام API جديد وموثوق)
+                const exchangeRes = await fetch("https://open.er-api.com/v6/latest/USD");
+                const exchangeData = await exchangeRes.json();
+                
+                // التحقق من النجاح واستخلاص السعر
+                if (exchangeData.result !== 'success' || !exchangeData.rates?.EGP) {
+                    throw new Error("لم يتم الحصول على سعر الدولار مقابل الجنيه من API سعر الصرف");
+                }
+                const usdToEgp = exchangeData.rates.EGP; // استخلاص السعر من الهيكل الجديد
+
+                // ⿣ التحويل من الأوقية إلى الجرام (عيار 24)
+                const GRAMS_PER_OUNCE = 31.1035;
+                const gram24PriceUSD = ouncePriceUSD / GRAMS_PER_OUNCE;
+                const gram24PriceEGP = gram24PriceUSD * usdToEgp;
+
+                // ⿤ حساب أسعار العيارات الأخرى بناءً على عيار 24 (تقريبًا)
+                const gram21PriceEGP = gram24PriceEGP * (21/24);
+                const gram18PriceEGP = gram24PriceEGP * (18/24);
+                
+                // ⿥ حساب التغير المحلي (كمثال)
+                // هنا نعتبر التغير المحلي مرتبط بشكل خطي مع التغير العالمي
+                const change24EGP = priceChangeUSD * usdToEgp / GRAMS_PER_OUNCE;
+                const change21EGP = change24EGP * (21/24);
+                const change18EGP = change24EGP * (18/24);
+
+                // ⿦ إرجاع النتائج
+                return {
+                    ouncePriceUSD: ouncePriceUSD,
+                    priceChangeUSD: priceChangeUSD,
+                    priceChangePercent: priceChangePercent,
+                    usdToEgp: usdToEgp,
+                    localPrices: [
+                        { name: 'جرام عيار 24', price: gram24PriceEGP, change: change24EGP, change_percent: priceChangePercent },
+                        { name: 'جرام عيار 21', price: gram21PriceEGP, change: change21EGP, change_percent: priceChangePercent },
+                        { name: 'جرام عيار 18', price: gram18PriceEGP, change: change18EGP, change_percent: priceChangePercent },
+                        { name: 'سبيكة الأونصة (31.1 جم)', price: gram24PriceEGP * GRAMS_PER_OUNCE, change: priceChangeUSD * usdToEgp, change_percent: priceChangePercent }
+                    ]
+                };
+
+            } catch (err) {
+                console.error("❌ خطأ في جلب البيانات:", err.message);
+                globalPriceEl.textContent = "خطأ";
+                changePillEl.textContent = "فشل التحميل!";
+                localPricesBodyEl.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-red-500">فشل في جلب أسعار الذهب.</td></tr>';
+                return null;
+            }
+        }
+
+        // ----------------------------------------------------------
+        // ⿢ دالة تحديث السعر العالمي
+        // ----------------------------------------------------------
+        function updateGlobalPrice(data) {
+            if (!data) return;
+
+            const { ouncePriceUSD, priceChangeUSD, priceChangePercent } = data;
+            
+            // 1. تحديث السعر
+            globalPriceEl.textContent = ouncePriceUSD.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+            // 2. تحديث شريط التغير (Pill)
+            let colorClass, statusText, iconSVG;
+            const isPositive = priceChangeUSD > 0.01;
+            const isNegative = priceChangeUSD < -0.01;
+            const sign = priceChangeUSD >= 0 ? '+' : '';
+            const changeAmountFixed = priceChangeUSD.toFixed(2);
+            const changePercentFixed = priceChangePercent.toFixed(2);
+
+            if (isPositive) {
+                colorClass = 'bg-green-100 text-green-700';
+                statusText = `${sign}${changeAmountFixed} (${sign}${changePercentFixed}%) صعود`;
+                // iconSVG = <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>;
+            } else if (isNegative) {
+                colorClass = 'bg-red-100 text-red-700';
+                statusText = `${changeAmountFixed} (${changePercentFixed}%) هبوط`;
+                // iconSVG = <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>;
+            } else {
+                colorClass = 'bg-gray-100 text-gray-500';
+                statusText = `0.00 (0.00%) استقرار`;
+                // iconSVG = <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>;
+            }
+
+            changePillEl.className = `price-change-pill ${colorClass} flex items-center`;
+            changePillEl.innerHTML = `${iconSVG}<span>${statusText}</span>`;
+
+            // 3. تحديث الوقت
+            lastUpdateEl.textContent = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+        
+        // ----------------------------------------------------------
+        // ⿣ دالة بناء جدول الأسعار المحلية
+        // ----------------------------------------------------------
+        function renderLocalPrices(localPrices) {
+            localPricesBodyEl.innerHTML = '';
+            
+            localPrices.forEach(item => {
+                const isPositive = item.change >= 0;
+                const changeClass = isPositive ? 'text-green-600' : 'text-red-600';
+                const sign = item.change >= 0 ? '+' : '';
+                
+                const formattedPrice = item.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                const formattedChange = item.change.toFixed(2);
+                const formattedChangePercent = item.change_percent.toFixed(2);
+
+                const iconSVG = isPositive 
+                    // ? <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                    // : <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>;
+
+                const row = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-lg font-bold text-gray-900">${item.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-lg font-semibold text-gray-700">${formattedPrice} ج.م</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-lg text-center ${changeClass}">
+                            <div class="flex items-center justify-center">
+                                ${iconSVG}
+                                <span>${sign}${formattedChange} (${sign}${formattedChangePercent}%)</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                localPricesBodyEl.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+
+        // ----------------------------------------------------------
+        // ⿤ الدالة الرئيسية لتشغيل التحديثات
+        // ----------------------------------------------------------
+        async function runUpdate() {
+            const goldData = await getGoldPrice();
+            if (goldData) {
+                updateGlobalPrice(goldData);
+                renderLocalPrices(goldData.localPrices);
+            }
+        }
+
+        // ⚡ تشغيل الوظيفة عند التحميل
+        runUpdate(); 
+
+        // ⏱ تحديث الأسعار كل 60 ثانية 
+        setInterval(runUpdate, 60000); 
+
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</body>
+</html>
